@@ -20,6 +20,7 @@ cloudflare:
 database:
   size: 5Gi
   instances: 1
+  storageClass: rook-ceph-block
 
 storage:
   bucketName: homeharbor-storage

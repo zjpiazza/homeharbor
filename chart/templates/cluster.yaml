@@ -8,7 +8,7 @@ spec:
   instances: {{ .Values.database.instances }}
   storage:
     size: {{ .Values.database.size }}
-    storageClass: ceph-block
+    storageClass: {{ .Values.database.storageClass | default "rook-ceph-block" }}
   bootstrap:
     initdb:
       database: homeharbor

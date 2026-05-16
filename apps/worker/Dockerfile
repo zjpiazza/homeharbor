@@ -18,13 +18,15 @@ RUN pnpm --filter @homeharbor/shared build
 RUN pnpm --filter @homeharbor/worker build
 
 FROM base AS runner
-WORKDIR /app
+WORKDIR /app/apps/worker
 ENV NODE_ENV=production
 ENV PORT=3001
 COPY --from=builder /app/apps/worker/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/worker/node_modules ./apps/worker/node_modules
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=builder /app/apps/worker/node_modules ./node_modules
+COPY --from=builder /app/apps/worker/package.json ./package.json
+COPY --from=builder /app/packages/shared/dist /app/packages/shared/dist
+COPY --from=builder /app/packages/shared/package.json /app/packages/shared/package.json
+COPY --from=builder /app/packages/shared/node_modules /app/packages/shared/node_modules
+COPY --from=builder /app/node_modules /app/node_modules
 EXPOSE 3001
 CMD ["node", "dist/index.js"]
