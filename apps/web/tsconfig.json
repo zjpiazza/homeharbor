@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"tsBuildInfoFile": "./dist/.tsbuildinfo",
+		"paths": {
+			"@homeharbor/api/*": ["../../apps/api/src/*"],
+			"@homeharbor/shared": ["../../packages/shared/src"],
+			"@homeharbor/shared/*": ["../../packages/shared/src/*"]
+		}
+	},
+	"include": ["src/**/*", "index.html"],
+	"references": [{ "path": "../../packages/shared" }, { "path": "../../apps/api" }]
+}

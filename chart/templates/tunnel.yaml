@@ -1,0 +1,16 @@
+apiVersion: networking.cfargotunnel.com/v1alpha1
+kind: Tunnel
+metadata:
+  name: {{ include "homeharbor.fullname" . }}
+  labels:
+    {{- include "homeharbor.labels" . | nindent 4 }}
+spec:
+  newTunnel:
+    name: {{ include "homeharbor.fullname" . }}
+  size: 1
+  cloudflare:
+    email: {{ .Values.cloudflare.email }}
+    domain: {{ .Values.domain }}
+    secret: {{ .Values.cloudflare.secretRef }}
+    secretNamespace: {{ .Values.cloudflare.secretNamespace }}
+    accountId: {{ .Values.cloudflare.accountId }}

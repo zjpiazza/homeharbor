@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- better-auth models ---
+
+model User {
+  id            String    @id
+  name          String?
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id        String   @id
+  identifier String
+  value     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+// --- HomeHarbor models ---
+
+model Property {
+  id                    String                @id @default(cuid())
+  name                  String
+  address               String
+  type                  String?
+  imageUrl              String?
+  description           String?
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  ownerId               String                @map("owner_id")
+  devices               Device[]
+  reservations          Reservation[]
+  workOrders            WorkOrder[]
+  quickAccessDevices    Device[]              @relation("PropertyQuickAccessDevices")
+  tenantId              String
+  tenant                Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  anomalyCheckEnabled   Boolean               @default(true)
+  anomalyCheckSchedule  String?
+  lastAnomalyCheckRunAt DateTime?             @map("last_anomaly_check_run_at")
+  anomalyReports        AnomalyReport[]
+  anomalyDetectionJobs  AnomalyDetectionJob[]
+
+  @@unique([tenantId, name])
+  @@index([name])
+  @@index([tenantId])
+  @@map("properties")
+}
+
+model Device {
+  id                      String                 @id @default(cuid())
+  name                    String
+  type                    DeviceType
+  category                DeviceCategory
+  capabilities            String[]               @default([])
+  state                   Json?
+  lastConnected           DateTime?              @map("last_connected")
+  lastControlledAt        DateTime?              @map("last_controlled_at")
+  lastControlCommand      String?                @map("last_control_command")
+  propertyId              String                 @map("property_id")
+  property                Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  events                  Event[]
+  quickAccessInProperties Property[]             @relation("PropertyQuickAccessDevices")
+  tenantId                String
+  tenant                  Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workOrders              WorkOrder[]
+  deviceReadings          DeviceReading[]
+  anomalyReports          AnomalyReport[]
+  AnomalyReportFinding    AnomalyReportFinding[]
+
+  @@unique([name, propertyId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@map("devices")
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  type      String
+  details   String?
+  data      Json?
+  deviceId  String?  @map("device_id")
+  userId    String?  @map("user_id")
+  device    Device?  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId])
+  @@index([type])
+  @@index([timestamp])
+  @@index([tenantId])
+  @@map("events")
+}
+
+model Reservation {
+  id         String   @id @default(cuid())
+  checkIn    DateTime @map("check_in")
+  checkOut   DateTime @map("check_out")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  propertyId String   @map("property_id")
+  guestId    String   @map("guest_id")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([guestId])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([tenantId])
+  @@map("reservations")
+}
+
+model WorkOrder {
+  id             String            @id @default(cuid())
+  issue          String
+  details        String?
+  status         WorkOrderStatus   @default(PENDING)
+  priority       WorkOrderPriority @default(MEDIUM)
+  reportedDate   DateTime          @default(now()) @map("reported_date")
+  assignedDate   DateTime?         @map("assigned_date")
+  completedDate  DateTime?         @map("completed_date")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  propertyId     String            @map("property_id")
+  reportedById   String?           @map("reported_by_id")
+  assignedUserId String?           @map("assigned_user_id")
+  property       Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  deviceId       String?
+  Device         Device?           @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  tenantId       String
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedUserId])
+  @@index([tenantId])
+  @@map("work_orders")
+}
+
+enum WorkOrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+
+  @@map("work_order_status")
+}
+
+enum WorkOrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+  @@map("work_order_priority")
+}
+
+enum DeviceCategory {
+  ENVIRONMENTAL
+  SECURITY
+  ENTERTAINMENT
+}
+
+enum AnomalyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESOLVED
+
+  @@map("anomaly_status")
+}
+
+enum AnomalyReportStatus {
+  NEW
+  REVIEWED
+  COMPLETED
+  ERROR
+
+  @@map("anomaly_report_status")
+}
+
+enum AnomalyFindingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESOLVED
+
+  @@map("anomaly_finding_status")
+}
+
+enum AnomalyTriggerType {
+  SCHEDULED
+  MANUAL
+
+  @@map("anomaly_trigger_type")
+}
+
+enum AnomalyDetectionJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+
+  @@map("anomaly_detection_job_status")
+}
+
+model DeviceReading {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  metric    String
+  value     Float
+  unit      String?
+  deviceId  String   @map("device_id")
+  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@index([metric])
+  @@index([tenantId])
+  @@map("device_readings")
+}
+
+model AnomalyDetectionJob {
+  id              String                     @id @default(cuid())
+  status          AnomalyDetectionJobStatus  @default(PENDING)
+  triggerType     AnomalyTriggerType
+  startedAt       DateTime?                  @map("started_at")
+  completedAt     DateTime?                  @map("completed_at")
+  errorMessage    String?                    @map("error_message")
+  propertyId      String                     @map("property_id")
+  property        Property                   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantId        String                     @map("tenant_id")
+  tenant          Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  anomalyReportId String?                    @unique @map("anomaly_report_id")
+  anomalyReport   AnomalyReport?             @relation(fields: [anomalyReportId], references: [id], onDelete: SetNull)
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  updatedAt       DateTime                   @updatedAt @map("updated_at")
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("anomaly_detection_jobs")
+}
+
+model AnomalyReport {
+  id                  String                 @id @default(cuid())
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime               @updatedAt @map("updated_at")
+  status              AnomalyReportStatus    @default(NEW)
+  triggerType         AnomalyTriggerType
+  propertyId          String                 @map("property_id")
+  property            Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantId            String                 @map("tenant_id")
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  findings            AnomalyReportFinding[]
+  Device              Device?                @relation(fields: [deviceId], references: [id])
+  deviceId            String?
+  anomalyDetectionJob AnomalyDetectionJob?
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("anomaly_reports")
+}
+
+model AnomalyReportFinding {
+  id                String               @id @default(cuid())
+  detectedAt        DateTime             @default(now()) @map("detected_at")
+  metric            String
+  description       String
+  severity          String
+  status            AnomalyFindingStatus @default(PENDING)
+  suggestedCommand  Json?                @map("suggested_command")
+  resolutionDetails String?
+  resolvedAt        DateTime?            @map("resolved_at")
+  resolvedByUserId  String?              @map("resolved_by_user_id")
+  deviceId          String               @map("device_id")
+  device            Device               @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  anomalyReportId   String               @map("anomaly_report_id")
+  anomalyReport     AnomalyReport        @relation(fields: [anomalyReportId], references: [id], onDelete: Cascade)
+  tenantId          String               @map("tenant_id")
+  tenant            Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  @@index([deviceId])
+  @@index([severity])
+  @@index([tenantId])
+  @@index([metric])
+  @@index([anomalyReportId])
+  @@map("anomaly_report_findings")
+}
+
+model Tenant {
+  id                   String                 @id @default(cuid())
+  name                 String
+  ownerId              String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  properties           Property[]
+  devices              Device[]
+  events               Event[]
+  reservations         Reservation[]
+  workOrders           WorkOrder[]
+  deviceReadings       DeviceReading[]
+  anomalyReports       AnomalyReport[]
+  anomalyFindings      AnomalyReportFinding[]
+  anomalyDetectionJobs AnomalyDetectionJob[]
+  metadata             Json?                  @default("{}")
+
+  @@index([ownerId])
+  @@map("tenants")
+}
+
+enum DeviceType {
+  THERMOSTAT
+  LIGHT
+  SMOKEDETECTOR
+  WATERSENSOR
+  LOCK
+  CAMERA
+  DOORBELL
+  MOTIONSENSOR
+  WINDOWSENSOR
+  SPEAKER
+  TV
+  ALARM
+}

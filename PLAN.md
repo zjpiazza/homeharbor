@@ -49,7 +49,7 @@ Greenfield rewrite of HomeHarbor (a property management / device monitoring / an
 ### Secrets
 
 - All secrets are SOPS-encrypted in repo. `path_regex: .+\.sops\.yaml$`; only `data` and `stringData` fields encrypted.
-- age recipient: `age1swfkes9cealehclknyt350m8lj7faw3xwvnx3mllr28xeekq3vyqe8545h`.
+- age recipient: `age105q796d973wvg0p3t4m0yfdqwzpztvvhj6v9gyllfywd3cdcvd5q9vwu2n`.
 - age private key on the operator's machine at `~/.config/sops/age/keys.txt` (mode 600). **Must be backed up.**
 - Cluster decryption Secret `sops-age` lives in `flux-system` namespace.
 - **Never** `cat`/`grep`/`echo` plaintext secret files. Pipe directly into `sops -e`. Mask values when validating.

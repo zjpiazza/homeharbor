@@ -1,0 +1,33 @@
+image:
+  api:
+    repository: ghcr.io/zjpiazza/homeharbor/api
+    tag: latest
+    pullPolicy: IfNotPresent
+  worker:
+    repository: ghcr.io/zjpiazza/homeharbor/worker
+    tag: latest
+    pullPolicy: IfNotPresent
+
+domain: homeharbor.cloud
+apiHost: api.homeharbor.cloud
+
+cloudflare:
+  accountId: ""
+  email: ""
+  secretRef: cloudflare-secrets
+  secretNamespace: cloudflare-operator-system
+
+database:
+  size: 5Gi
+  instances: 1
+
+storage:
+  bucketName: homeharbor-storage
+
+inngest:
+  baseUrl: http://inngest.inngest.svc.cluster.local:8288
+
+permit:
+  pdpUrl: http://permit-pdp.permit-pdp.svc.cluster.local:7000
+
+secrets: {}

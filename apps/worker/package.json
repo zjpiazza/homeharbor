@@ -1,0 +1,22 @@
+{
+	"name": "@homeharbor/worker",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc",
+		"start": "node dist/index.js",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"dotenv": "^16.4.7",
+		"inngest": "^3.35.1"
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.10",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.2"
+	}
+}

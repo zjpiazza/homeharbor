@@ -1,0 +1,19 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "homeharbor.fullname" . }}-pg
+  labels:
+    {{- include "homeharbor.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.database.instances }}
+  storage:
+    size: {{ .Values.database.size }}
+    storageClass: ceph-block
+  bootstrap:
+    initdb:
+      database: homeharbor
+      owner: homeharbor
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: "128MB"

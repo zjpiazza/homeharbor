@@ -1,0 +1,17 @@
+apiVersion: networking.cfargotunnel.com/v1alpha1
+kind: TunnelBinding
+metadata:
+  name: {{ include "homeharbor.fullname" . }}-api
+  labels:
+    {{- include "homeharbor.labels" . | nindent 4 }}
+subjects:
+  - name: {{ include "homeharbor.fullname" . }}-api
+    spec:
+      target: {{ include "homeharbor.fullname" . }}-api:80
+tunnelRef:
+  kind: Tunnel
+  name: {{ include "homeharbor.fullname" . }}
+  disableDNSUpdates: false
+status:
+  hostnames:
+    - {{ .Values.apiHost }}
