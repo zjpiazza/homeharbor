@@ -12,5 +12,4 @@ spec:
     email: {{ .Values.cloudflare.email }}
     domain: {{ .Values.domain }}
     secret: {{ .Values.cloudflare.secretRef }}
-    secretNamespace: {{ .Values.cloudflare.secretNamespace }}
     accountId: {{ .Values.cloudflare.accountId }}

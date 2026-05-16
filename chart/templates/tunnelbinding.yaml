@@ -7,11 +7,9 @@ metadata:
 subjects:
   - name: {{ include "homeharbor.fullname" . }}-api
     spec:
+      fqdn: {{ .Values.apiHost }}
       target: {{ include "homeharbor.fullname" . }}-api:80
 tunnelRef:
   kind: Tunnel
   name: {{ include "homeharbor.fullname" . }}
   disableDNSUpdates: false
-status:
-  hostnames:
-    - {{ .Values.apiHost }}
